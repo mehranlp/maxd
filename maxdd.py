@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 
 """
 ###   THIS VISUALIZATION REPRESTS YOUR WEALTH BEHAVIOUR IF YOU HAD INVEST IN S&P500 AT CERTAIN TIME AND ALSO SHOWS THE MAXIMUM [DRAWDOWN](https://www.investopedia.com/terms/d/drawdown.asp) IN YOUR WEALTH
-#####    BY MEHRAN POORMALEK ([LINKEDIN](https://www.linkedin.com/in/mehran-p))
+#####    BY MEHRAN POORMALEK ([CODE REPOSITORY](https://github.com/mehranlp/maxd))
 """
 
 # Create strart and end dates sidebar
