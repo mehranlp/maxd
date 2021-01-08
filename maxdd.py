@@ -11,7 +11,9 @@ means if you have a long-term view, you should not worry about investment at a
 and how much your account could go down at any point in time when the market collapse. You can learn more about  [maximum drawdown here](https://www.investopedia.com/terms/d/drawdown.asp).
 As you can try with this application, if you would invest in the S&P 500 in April 2000, you had to wait almost 13 years to get your initial investment back!!!Of course, this doesn't mean you should avoid investing 
 or try to time the market (again it is impossible!). It only means you must rely on your investment philosophy, asset diversification, and the company you want to invest in for
-return, not on the general market movements, and buy any stock you heard about on Twitter or motley ..... 
+return, not on the general market movements, and buy any stock you heard about on Twitter or Motley .....
+"""
+"""
 BY MEHRAN POORMALEK ([CODE REPOSITORY](https://github.com/mehranlp/maxd))
 """
 
