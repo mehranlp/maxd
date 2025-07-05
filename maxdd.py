@@ -28,7 +28,7 @@ amount = st.sidebar.number_input(label='HOW MUCH YOU WOULD INVEST AT THE TIME?',
                                 min_value=0.0,max_value=1000000.00)
 
 
-tickerSymbol='^GSPC'
+tickerSymbol='SPY'
 #Get data of this ticker
 tickerData=yf.Ticker(tickerSymbol)
 #get historical data of each ticker
