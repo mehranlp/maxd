@@ -41,9 +41,7 @@ tickerDF=tickerDF.dropna(
 tickerDF['Wealth']=((1+
                     (tickerDF['Return1'])).cumprod())
 tickerDF['Wealth']=tickerDF['Wealth']*amount
-tickerDF=tickerDF.drop(
-                    ['Open','High','Low','Close','Volume',
-                    'Dividends','Stock Splits','Return1'],axis=1)
+tickerDF = tickerDF.drop(['Open','High','Low','Close','Volume','Dividends','Stock Splits','Return1'], axis=1, errors='ignore')
 
 tickerDF['previous_peaks'] = tickerDF['Wealth'].cummax()
 tickerDF['drawdown']=(tickerDF['Wealth']-tickerDF['previous_peaks'])/tickerDF['previous_peaks']
