@@ -49,7 +49,7 @@ else:
     df['Year'] = df['Date'].dt.year
     df['Month'] = df['Date'].dt.month
 
-    invest_month = df['Month'].min()
+    invest_month = df['Month'].min()  # consistent annual month
     annual_invest_dates = df[df['Month'] == invest_month].copy()
     annual_invest_dates['Investment'] = amount
 
@@ -78,19 +78,42 @@ else:
     fig2.update_traces(line_color='red', fillcolor='rgba(255,0,0,0.3)')
     fig2.update_layout(yaxis_tickformat=".0%", width=900, height=500)
 
-    # --- Metrics ---
-    max_dd_value = df['Drawdown'].min()
-    max_dd_date = df.loc[df['Drawdown'].idxmin(), 'Date']
-    wealth_at_dd = df.loc[df['Drawdown'].idxmin(), 'Wealth']
+    # --- Metrics for Drawdown Analysis ---
+    dd_idx = df['Drawdown'].idxmin()
+    max_dd_value = df.loc[dd_idx, 'Drawdown']
+    max_dd_date = df.loc[dd_idx, 'Date']
+    wealth_at_dd = df.loc[dd_idx, 'Wealth']
+
+    # Peak before drawdown
+    peak_idx = df.loc[:dd_idx, 'Wealth'].idxmax()
+    peak_date = df.loc[peak_idx, 'Date']
+    wealth_before_dd = df.loc[peak_idx, 'Wealth']
+
+    # Recovery
+    recovery_date = None
+    wealth_after_recovery = None
+    for i in range(dd_idx + 1, len(df)):
+        if df.loc[i, 'Wealth'] >= wealth_before_dd:
+            recovery_date = df.loc[i, 'Date']
+            wealth_after_recovery = df.loc[i, 'Wealth']
+            break
 
     # --- Display Plots ---
     st.plotly_chart(fig1, use_container_width=True)
     st.plotly_chart(fig2, use_container_width=True)
 
-    # --- Drawdown Summary ---
+    # --- Enhanced Drawdown Summary ---
     st.markdown("### 📊 Maximum Drawdown Summary")
     st.markdown(f"""
-- **📉 Maximum Drawdown:** `{max_dd_value:.2%}`
-- **📅 Date of Maximum Drawdown:** `{max_dd_date.strftime('%Y-%m-%d')}`
-- **💸 Portfolio Value at Max Drawdown:** `${wealth_at_dd:,.2f}`
+- **📈 Wealth Before Drawdown:** `${wealth_before_dd:,.2f}` on `{peak_date.strftime('%Y-%m-%d')}`
+- **📉 Wealth at Max Drawdown:** `${wealth_at_dd:,.2f}` on `{max_dd_date.strftime('%Y-%m-%d')}`  
+- **🔻 Maximum Drawdown:** `{max_dd_value:.2%}`
 """)
+
+    if recovery_date:
+        st.markdown(f"""
+- **🔁 Recovery Date:** `{recovery_date.strftime('%Y-%m-%d')}`  
+- **💸 Wealth at Recovery:** `${wealth_after_recovery:,.2f}`
+""")
+    else:
+        st.markdown("- ❗ The portfolio has **not yet recovered** to its pre-drawdown peak during this period.")
