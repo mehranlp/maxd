@@ -17,6 +17,7 @@ asset_options = {
     "S&P 500 (SPY)": "SPY",
     "NASDAQ-100 (QQQ)": "QQQ",
     "Global Equity (VXUS)": "VXUS",
+    "Global Bonds (AGGG)": "AGGG",
     "Bitcoin (BTC-USD)": "BTC-USD",
     "Gold (GLD)": "GLD"
 }
