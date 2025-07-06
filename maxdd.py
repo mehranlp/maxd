@@ -23,6 +23,9 @@ asset_options = {
 }
 asset_name = st.sidebar.selectbox("Investment Asset", list(asset_options.keys()))
 tickerSymbol = asset_options[asset_name]
+# Show data quality warning for AGGG
+if tickerSymbol == "AGGG":
+    st.warning("⚠️ Note: The data for the Global Aggregate Bond Index (AGGG) from free sources like Yahoo Finance may contain anomalies, such as artificial price spikes or drops due to rebalancing. A higher-quality (paid) data source would provide more accurate performance metrics.")
 
 # --- App header ---
 st.title("Wealth & Drawdown Tracker")
