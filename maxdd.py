@@ -49,7 +49,7 @@ else:
     df['Year'] = df['Date'].dt.year
     df['Month'] = df['Date'].dt.month
 
-    invest_month = df['Month'].min()  # use earliest month in data for consistency
+    invest_month = df['Month'].min()
     annual_invest_dates = df[df['Month'] == invest_month].copy()
     annual_invest_dates['Investment'] = amount
 
@@ -78,9 +78,19 @@ else:
     fig2.update_traces(line_color='red', fillcolor='rgba(255,0,0,0.3)')
     fig2.update_layout(yaxis_tickformat=".0%", width=900, height=500)
 
+    # --- Metrics ---
+    max_dd_value = df['Drawdown'].min()
+    max_dd_date = df.loc[df['Drawdown'].idxmin(), 'Date']
+    wealth_at_dd = df.loc[df['Drawdown'].idxmin(), 'Wealth']
+
+    # --- Display Plots ---
     st.plotly_chart(fig1, use_container_width=True)
     st.plotly_chart(fig2, use_container_width=True)
 
-    # --- Show max drawdown info ---
-    max_dd = df['Drawdown'].min()
-    st.markdown(f"### 📉 Maximum Drawdown: **{max_dd:.2%}**")
+    # --- Drawdown Summary ---
+    st.markdown("### 📊 Maximum Drawdown Summary")
+    st.markdown(f"""
+- **📉 Maximum Drawdown:** `{max_dd_value:.2%}`
+- **📅 Date of Maximum Drawdown:** `{max_dd_date.strftime('%Y-%m-%d')}`
+- **💸 Portfolio Value at Max Drawdown:** `${wealth_at_dd:,.2f}`
+""")
