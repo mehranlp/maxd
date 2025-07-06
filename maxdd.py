@@ -2,65 +2,85 @@ import yfinance as yf
 import streamlit as st
 from datetime import datetime
 import plotly.express as px
-
 from dateutil.relativedelta import relativedelta
-"""
-As of today, January 7, 2021, the stock market has been climbing and set a record higher almost every day. If you are following the Financial Twitter feed, you will find a GENIUS who beat the market and made
-a 30-40% return in a day or week! The market timing is practically impossible and no one could tell what will happen in 1 day, let alone one week or year! But you may hear about "Long Term Return" which is on average 7% per year for S&p 500, that basically
-means if you have a long-term view, you should not worry about investment at any point, because the market always goes up in long term! Well, the purpose of this application is to give you a better sense of what you would have expected if you invest your money in the past,
-and how much your account could go down at any point in time when the market collapse. You can learn more about  [maximum drawdown here](https://www.investopedia.com/terms/d/drawdown.asp).
-As you can try with this application, if you would invest in the S&P 500 in April 2000, you had to wait almost 13 years to get your initial investment back!!!Of course, this doesn't mean you should avoid investing 
-or try to time the market (again it is impossible!). It only means you must rely on your investment philosophy, asset diversification, and the company you want to invest in for
-return, not on the general market movements, and buy any stock you heard about on Twitter or Motley .....
-"""
-"""
-BY MEHRAN POORMALEK ([CODE REPOSITORY](https://github.com/mehranlp/maxd))
-"""
 
-# Create strart and end dates sidebar
-start_date = st.sidebar.date_input(
-    "Start date:", (datetime.now() - relativedelta(years=10)),
-)
-end_date = st.sidebar.date_input("End date:",
-                                datetime.now())
-# Create box to input amount of investment
-amount = st.sidebar.number_input(label='HOW MUCH YOU WOULD INVEST AT THE TIME?',
-                                min_value=0.0,max_value=1000000.00)
+st.set_page_config(page_title="Drawdown Visualizer", layout="wide")
 
+# --- Sidebar inputs ---
+st.sidebar.title("Investment Parameters")
+start_date = st.sidebar.date_input("Start date:", datetime.now() - relativedelta(years=10))
+end_date = st.sidebar.date_input("End date:", datetime.now())
+amount = st.sidebar.number_input("Annual Investment Amount ($)", min_value=100.0, max_value=1_000_000.0, value=1000.0)
 
-tickerSymbol='SPY'
-#Get data of this ticker
-tickerData=yf.Ticker(tickerSymbol)
-#get historical data of each ticker
-tickerDF=tickerData.history(period='1w',start=start_date, end=end_date)
-tickerDF['Return1']=tickerDF['Close'].pct_change()
+# Define investment options
+asset_options = {
+    "S&P 500 (SPY)": "SPY",
+    "NASDAQ-100 (QQQ)": "QQQ",
+    "Global Equity (VXUS)": "VXUS",
+    "Bitcoin (BTC-USD)": "BTC-USD",
+    "Gold (GLD)": "GLD"
+}
+asset_name = st.sidebar.selectbox("Investment Asset", list(asset_options.keys()))
+tickerSymbol = asset_options[asset_name]
 
+# --- App header ---
+st.title("Wealth & Drawdown Tracker")
+st.markdown(f"""
+Visualize **cumulative wealth** and **maximum drawdowns** when investing **${amount:,.0f} annually** in **{asset_name}** from {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}.
+""")
 
-tickerDF=tickerDF.dropna(
-                axis=0)
-tickerDF['Wealth']=((1+
-                    (tickerDF['Return1'])).cumprod())
-tickerDF['Wealth']=tickerDF['Wealth']*amount
-tickerDF = tickerDF.drop(['Open','High','Low','Close','Volume','Dividends','Stock Splits','Return1'], axis=1, errors='ignore')
+# --- Get historical data ---
+@st.cache_data
+def get_data(ticker, start, end):
+    df = yf.Ticker(ticker).history(start=start, end=end, interval='1wk')
+    df = df[['Close']].dropna()
+    df = df.reset_index()
+    return df
 
-tickerDF['previous_peaks'] = tickerDF['Wealth'].cummax()
-tickerDF['drawdown']=(tickerDF['Wealth']-tickerDF['previous_peaks'])/tickerDF['previous_peaks']
+df = get_data(tickerSymbol, start_date, end_date)
 
-st.plotly_chart(
-    px.line(tickerDF['Wealth']).update_layout(
-    plot_bgcolor="white",
-        yaxis_title="Your Wealth all in S&P 500",
-        legend_title_text="Wealth Index",width=900, height=600
-    )
-)
+if df.empty:
+    st.error("No data found for selected period.")
+else:
+    df['Return'] = df['Close'].pct_change()
+    df.dropna(inplace=True)
 
-"""
-### MAXIMUM DRADOWN
-"""
+    # --- Simulate annual investments ---
+    df['Year'] = df['Date'].dt.year
+    df['Month'] = df['Date'].dt.month
 
-st.plotly_chart(
-    px.area(tickerDF['drawdown']).update_layout(
-        yaxis_title="Drawdown", legend_title_text="Drawdown",
-        width=900, height=600
-    )
-)
+    invest_month = df['Month'].min()  # use earliest month in data for consistency
+    annual_invest_dates = df[df['Month'] == invest_month].copy()
+    annual_invest_dates['Investment'] = amount
+
+    df['Wealth'] = 0
+    units = 0
+    total_value = []
+
+    for i, row in df.iterrows():
+        if row['Date'].month == invest_month and row['Date'].year in annual_invest_dates['Year'].values:
+            units += amount / row['Close']
+        total_value.append(units * row['Close'])
+
+    df['Wealth'] = total_value
+    df['PreviousPeak'] = df['Wealth'].cummax()
+    df['Drawdown'] = (df['Wealth'] - df['PreviousPeak']) / df['PreviousPeak']
+
+    # --- Plot Wealth ---
+    fig1 = px.line(df, x='Date', y='Wealth', title=f"Wealth Over Time: {asset_name}",
+                   labels={"Wealth": "Portfolio Value ($)"})
+    fig1.update_traces(line_color='green')
+    fig1.update_layout(plot_bgcolor="white", width=900, height=500)
+
+    # --- Plot Drawdown ---
+    fig2 = px.area(df, x='Date', y='Drawdown', title=f"Drawdown Over Time: {asset_name}",
+                   labels={"Drawdown": "Drawdown (fraction)"})
+    fig2.update_traces(line_color='red', fillcolor='rgba(255,0,0,0.3)')
+    fig2.update_layout(yaxis_tickformat=".0%", width=900, height=500)
+
+    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # --- Show max drawdown info ---
+    max_dd = df['Drawdown'].min()
+    st.markdown(f"### 📉 Maximum Drawdown: **{max_dd:.2%}**")
